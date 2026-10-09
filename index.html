@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <meta name="description" content="个人科学学习平台：整理课程资源、制定学习路径并追踪学习进度。">
+  <title>Science Learning Studio · 个人学习平台</title>
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <script src="./assets/js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳转到主要内容</a>
+  <header class="topbar">
+    <a class="brand" href="./index.html" aria-label="Science Learning Studio 首页">
+      <span class="brand-mark" aria-hidden="true">S</span>
+      <span><strong>Science Learning Studio</strong><small>个人科学学习平台</small></span>
+    </a>
+    <nav class="top-nav" aria-label="主导航">
+      <a class="nav-link active" href="#catalog">课程中心</a>
+      <a class="nav-link" href="#pathways">学习路径</a>
+      <a class="nav-link" href="#saved">我的收藏</a>
+      <a class="nav-link original-link" href="./README.md" target="_blank" rel="noopener">原始课程清单 ↗</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">LEARN WITH A PLAN</p>
+        <h1>把好课程，变成<br><span>真正学会的知识。</span></h1>
+        <p class="hero-description">从数学与计算机基础开始，逐步建立 AI 学习所需的知识体系。课程链接保留原始来源，学习进度先保存在当前设备。</p>
+        <a class="primary-button" href="#catalog">浏览课程 <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="hero-core"><span>∑</span><span class="core-dot">AI</span></div>
+        <span class="float-card float-code">{" }"</span>
+        <span class="float-card float-math">∫ f(x) dx</span>
+        <span class="float-card float-node">01 / LEARN</span>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="平台概况">
+      <article class="stat-card"><span class="stat-label">课程资源</span><strong id="course-count">—</strong><span class="stat-note">首批精选学习入口</span></article>
+      <article class="stat-card"><span class="stat-label">学习方向</span><strong>4</strong><span class="stat-note">编程 · 数学 · AI · 系统</span></article>
+      <article class="stat-card"><span class="stat-label">已收藏</span><strong id="saved-count">0</strong><span class="stat-note">保存在当前浏览器</span></article>
+      <article class="stat-card"><span class="stat-label">完成进度</span><strong id="completed-count">0</strong><span class="stat-note">标记为已完成的课程</span></article>
+    </section>
+
+    <section class="section-block" id="catalog">
+      <div class="section-heading">
+        <div><p class="eyebrow">YOUR LIBRARY</p><h2>课程中心</h2><p class="section-subtitle">搜索课程名称、主题或学习阶段，找到适合当前水平的内容。</p></div>
+      </div>
+      <div class="catalog-tools">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="搜索课程、主题或关键词…" autocomplete="off"><kbd>⌘ K</kbd></label>
+        <label class="filter-label" for="level-filter">难度</label>
+        <select id="level-filter" class="select-control"><option value="all">全部难度</option><option value="入门">入门</option><option value="基础">基础</option><option value="进阶">进阶</option></select>
+        <button id="saved-toggle" class="secondary-button" type="button" aria-pressed="false">♡ 只看收藏</button>
+      </div>
+      <div id="category-filters" class="category-filters" aria-label="课程分类">
+        <button class="category-chip active" type="button" data-category="全部" aria-pressed="true">全部课程</button>
+        <button class="category-chip" type="button" data-category="计算机科学" aria-pressed="false">计算机科学</button>
+        <button class="category-chip" type="button" data-category="人工智能" aria-pressed="false">人工智能</button>
+        <button class="category-chip" type="button" data-category="数学基础" aria-pressed="false">数学基础</button>
+        <button class="category-chip" type="button" data-category="编程基础" aria-pressed="false">编程基础</button>
+      </div>
+      <div id="course-grid" class="course-grid" aria-live="polite">
+        <div class="loading-state">正在整理课程资源…</div>
+      </div>
+      <p id="results-note" class="results-note" aria-live="polite"></p>
+    </section>
+
+    <section class="section-block pathways-section" id="pathways">
+      <div class="section-heading"><div><p class="eyebrow">LEARNING ROADMAP</p><h2>推荐学习路径</h2><p class="section-subtitle">先打基础，再进入模型与应用。可按自己的节奏推进。</p></div></div>
+      <div class="pathway-grid">
+        <article class="pathway-card"><span class="pathway-number">01</span><div class="pathway-icon">⌘</div><h3>编程与工具</h3><p>Python 基础、调试、数据结构与代码阅读。</p><div class="pathway-tags"><span>入门</span><span>4–6 周</span></div><a href="#catalog" data-path-filter="编程基础" class="text-link">查看相关课程 →</a></article>
+        <article class="pathway-card"><span class="pathway-number">02</span><div class="pathway-icon">∫</div><h3>数学基础</h3><p>线性代数、微积分、概率统计与优化思维。</p><div class="pathway-tags"><span>基础</span><span>持续学习</span></div><a href="#catalog" data-path-filter="数学基础" class="text-link">查看相关课程 →</a></article>
+        <article class="pathway-card"><span class="pathway-number">03</span><div class="pathway-icon">◈</div><h3>机器学习与 AI</h3><p>理解数据、损失函数、训练过程和模型评估。</p><div class="pathway-tags"><span>进阶</span><span>6–10 周</span></div><a href="#catalog" data-path-filter="人工智能" class="text-link">查看相关课程 →</a></article>
+        <article class="pathway-card"><span class="pathway-number">04</span><div class="pathway-icon">▤</div><h3>计算机科学</h3><p>算法、系统与计算机工作原理，建立整体视角。</p><div class="pathway-tags"><span>基础—进阶</span><span>持续学习</span></div><a href="#catalog" data-path-filter="计算机科学" class="text-link">查看相关课程 →</a></article>
+      </div>
+    </section>
+
+    <section class="section-block saved-section" id="saved">
+      <div class="saved-banner"><div><p class="eyebrow">YOUR PROGRESS</p><h2>让学习留下痕迹</h2><p>收藏课程，并在课程卡片上标记完成。当前版本将数据保存在这台设备的浏览器中；尚未接入账号同步或云端数据库。</p></div><a class="secondary-button" href="#catalog">管理课程 →</a></div>
+    </section>
+    <footer class="footer"><span>Science Learning Studio</span><span>学习平台骨架 · 课程链接以来源网站为准</span><a href="./README.md" target="_blank" rel="noopener">查看原始资源清单 ↗</a></footer>
+  </main>
+
+  <dialog id="course-dialog" class="course-dialog" aria-labelledby="dialog-title">
+    <form method="dialog"><button class="dialog-close" aria-label="关闭课程详情">×</button></form>
+    <div id="dialog-content"></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
