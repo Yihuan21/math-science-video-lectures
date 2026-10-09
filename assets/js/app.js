@@ -127,11 +127,14 @@
   function updateDashboard() {
     const completedCourseCount = state.courses.filter(course => completed.has(course.id)).length;
     const courseRate = state.courses.length ? Math.round(completedCourseCount / state.courses.length * 100) : 0;
-    const taskDone = TASKS.filter(task => completedTasks.has(task.id)).length;
+    const builtInTaskDone = TASKS.filter(task => completedTasks.has(task.id)).length;
+    const customTaskList = Object.values(courseTasks).flat().filter(task => task && typeof task === "object");
+    const taskTotal = TASKS.length + customTaskList.length;
+    const taskDone = builtInTaskDone + customTaskList.filter(task => task.done).length;
     $("#dash-course-rate").textContent = courseRate + "%";
     $("#dash-course-detail").textContent = `${completedCourseCount} / ${state.courses.length} 门课程`;
-    $("#dash-task-rate").textContent = Math.round(taskDone / TASKS.length * 100) + "%";
-    $("#dash-task-detail").textContent = `${taskDone} / ${TASKS.length} 项内置任务`;
+    $("#dash-task-rate").textContent = Math.round(taskTotal ? taskDone / taskTotal * 100 : 0) + "%";
+    $("#dash-task-detail").textContent = `${taskDone} / ${taskTotal} 项任务（含自定义任务）`;
     const minutes = studyLogs.reduce((sum, log) => sum + Math.max(0, Number(log.minutes) || 0), 0);
     $("#dash-study-minutes").textContent = minutes >= 60 ? `${Math.floor(minutes/60)}小时${minutes%60 ? " " + minutes%60 + "分" : ""}` : `${minutes} 分钟`;
     const dates = [...new Set(studyLogs.filter(log => log.createdAt && !Number.isNaN(new Date(log.createdAt).getTime())).map(log => localDateKey(new Date(log.createdAt))))].sort().reverse();
@@ -169,7 +172,7 @@
   }
   function renderCourseTasks(courseId) {
     const tasks = Array.isArray(courseTasks[courseId]) ? courseTasks[courseId] : [];
-    return tasks.length ? tasks.map(task=>`<label class="course-custom-task ${task.done ? "task-done" : ""}"><input type="checkbox" data-course-task-toggle="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" ${task.done ? "checked" : ""}><span>${escapeHtml(task.title)}</span><button type="button" class="note-delete" data-course-task-delete="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" aria-label="删除任务">删除</button></label>`).join("") : '<p class="study-muted">还没有自定义任务。可以添加习题、章节复盘或小项目。</p>';
+    return tasks.length ? tasks.map(task=>`<div class="course-custom-task ${task.done ? "task-done" : ""}"><input type="checkbox" aria-label="完成任务：${escapeHtml(task.title)}" data-course-task-toggle="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" ${task.done ? "checked" : ""}><span>${escapeHtml(task.title)}</span><button type="button" class="note-delete" data-course-task-delete="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" aria-label="删除任务">删除</button></div>`).join("") : '<p class="study-muted">还没有自定义任务。可以添加习题、章节复盘或小项目。</p>';
   }
   function showDetails(id) {
     const course = state.courses.find((item) => item.id === id);
