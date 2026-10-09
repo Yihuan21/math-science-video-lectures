@@ -75,7 +75,7 @@
         <p class="study-muted">回答遵循统一学习对话规范：先给明确结论、分步骤解释、优先引导思考，并在结尾给出一个具体下一步。API 密钥只保存在 Cloudflare Worker，不写入网页。</p>
         <div id="ai-assistant-content" class="ai-assistant-content">
           <span id="ai-connection-status" class="assistant-status">尚未连接</span>
-          <div class="ai-connection-settings" id="ai-connection-settings">
+          <div class="ai-connection-settings" id="ai-connection-settings" hidden>
             <h4>连接设置</h4>
             <label class="note-field"><span>Cloudflare Worker API 地址</span><input id="ai-api-endpoint" class="note-input" type="url" inputmode="url" placeholder="https://你的-worker.workers.dev/api/chat" autocomplete="url"></label>
             <label class="note-field"><span>访问令牌（Worker 的 AI_ACCESS_TOKEN）</span><input id="ai-access-token" class="note-input" type="password" autocomplete="off" placeholder="输入你设置的 Worker 访问令牌"></label>
