@@ -1,0 +1,8 @@
+name = "math-science-video-lectures"
+main = "worker/index.js"
+compatibility_date = "2026-10-09"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
