@@ -9,7 +9,12 @@
     "format": "文档 / 示例",
     "icon": "⌘",
     "description": "从解释器、基础语法、数据结构到模块与异常，适合已有少量编程经验、希望系统学习 Python 的学习者。",
-    "topics": ["Python", "编程", "数据结构", "函数"],
+    "topics": [
+      "Python",
+      "编程",
+      "数据结构",
+      "函数"
+    ],
     "recommendation": "边阅读边运行示例；每学完一个章节，自己改写一个小程序。",
     "url": "https://docs.python.org/3/tutorial/"
   },
@@ -23,7 +28,14 @@
     "format": "视频 / 作业",
     "icon": "⌘",
     "description": "通过编程问题建立计算机科学基础，涉及算法、数据结构、内存、Python、SQL 与 Web 等主题。",
-    "topics": ["算法", "数据结构", "C", "Python", "SQL", "Web"],
+    "topics": [
+      "算法",
+      "数据结构",
+      "C",
+      "Python",
+      "SQL",
+      "Web"
+    ],
     "recommendation": "不要只看视频；尝试完成课程问题集，并为每道错题记录原因。",
     "url": "https://cs50.harvard.edu/x/"
   },
@@ -37,7 +49,12 @@
     "format": "视频 / 讲义",
     "icon": "◈",
     "description": "以讲座和配套材料介绍深度学习的核心思想与代表性应用。建议先具备 Python、线性代数与基础微积分知识。",
-    "topics": ["深度学习", "神经网络", "机器学习", "生成模型"],
+    "topics": [
+      "深度学习",
+      "神经网络",
+      "机器学习",
+      "生成模型"
+    ],
     "recommendation": "先理解每个模型的输入、输出、损失函数与训练目标，再尝试复现讲义中的小实验。",
     "url": "https://introtodeeplearning.com/"
   },
@@ -51,7 +68,12 @@
     "format": "课程材料",
     "icon": "◈",
     "description": "机器学习课程资源，适合希望从数学角度理解监督学习、模型训练与泛化的学习者。数学先修要求相对较高。",
-    "topics": ["机器学习", "概率统计", "线性代数", "优化"],
+    "topics": [
+      "机器学习",
+      "概率统计",
+      "线性代数",
+      "优化"
+    ],
     "recommendation": "学习前复习矩阵运算、概率分布、导数与梯度；每次推导都尝试解释符号的含义。",
     "url": "https://cs229.stanford.edu/"
   },
@@ -65,7 +87,12 @@
     "format": "视频 / 讲义",
     "icon": "∫",
     "description": "系统学习矩阵、线性方程组、向量空间、特征值与特征向量，为机器学习和科学计算打基础。",
-    "topics": ["线性代数", "矩阵", "特征值", "向量空间"],
+    "topics": [
+      "线性代数",
+      "矩阵",
+      "特征值",
+      "向量空间"
+    ],
     "recommendation": "每个概念都配合手算小例子，并区分几何直觉、代数定义与计算步骤。",
     "url": "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/"
   },
@@ -79,8 +106,210 @@
     "format": "视频 / 讲义",
     "icon": "∫",
     "description": "微积分入门课程资源，帮助建立极限、导数、积分和函数分析的基础理解。",
-    "topics": ["微积分", "极限", "导数", "积分"],
+    "topics": [
+      "微积分",
+      "极限",
+      "导数",
+      "积分"
+    ],
     "recommendation": "先理解定义和几何意义，再练习计算；把常见错误整理成复习清单。",
     "url": "https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/"
+  },
+  {
+    "id": "missing-semester",
+    "title": "The Missing Semester of Your CS Education",
+    "category": "计算机科学",
+    "level": "入门",
+    "language": "英文",
+    "provider": "MIT",
+    "format": "视频 / 讲义 / 练习",
+    "icon": "⌘",
+    "description": "补齐命令行、Shell、版本控制、调试、编辑器与自动化等日常计算机工作技能。",
+    "topics": [
+      "命令行",
+      "Git",
+      "Shell",
+      "调试",
+      "效率工具"
+    ],
+    "recommendation": "每看完一节就在自己的设备上完成对应操作；重点是亲自使用工具，而不是只记命令。",
+    "url": "https://missing.csail.mit.edu/"
+  },
+  {
+    "id": "automate-boring-stuff",
+    "title": "Automate the Boring Stuff with Python",
+    "category": "编程基础",
+    "level": "入门",
+    "language": "英文",
+    "provider": "Al Sweigart",
+    "format": "免费在线书 / 示例",
+    "icon": "⌘",
+    "description": "用实际任务学习 Python 自动化，包括文件处理、表格、网页操作与重复工作脚本。",
+    "topics": [
+      "Python",
+      "自动化",
+      "文件处理",
+      "实践项目"
+    ],
+    "recommendation": "每章完成一个能解决自己真实问题的小脚本；先理解代码，再尝试修改需求。",
+    "url": "https://automatetheboringstuff.com/"
+  },
+  {
+    "id": "harvard-stat110",
+    "title": "Introduction to Probability (Stat 110)",
+    "category": "数学基础",
+    "level": "基础",
+    "language": "英文",
+    "provider": "Harvard University",
+    "format": "视频 / 讲义 / 习题",
+    "icon": "∫",
+    "description": "系统建立概率论基础，覆盖条件概率、随机变量、期望与常见概率模型，是理解机器学习的重要数学准备。",
+    "topics": [
+      "概率论",
+      "条件概率",
+      "随机变量",
+      "期望",
+      "贝叶斯"
+    ],
+    "recommendation": "每节课先独立尝试例题，再看讲解；重点理解事件关系和随机变量定义。",
+    "url": "https://stat110.hsites.harvard.edu/"
+  },
+  {
+    "id": "3b1b-linear-algebra",
+    "title": "Essence of Linear Algebra",
+    "category": "数学基础",
+    "level": "入门",
+    "language": "英文",
+    "provider": "3Blue1Brown",
+    "format": "可视化视频系列",
+    "icon": "∫",
+    "description": "用几何动画建立向量、线性变换、矩阵、行列式与特征向量的直觉，适合与正式教材搭配。",
+    "topics": [
+      "线性代数",
+      "向量",
+      "矩阵",
+      "线性变换",
+      "特征向量"
+    ],
+    "recommendation": "每看完一集，用纸笔画出核心几何图像，再回到教材核对定义与计算方法。",
+    "url": "https://www.3blue1brown.com/topics/linear-algebra"
+  },
+  {
+    "id": "berkeley-cs188",
+    "title": "CS 188: Introduction to Artificial Intelligence",
+    "category": "人工智能",
+    "level": "进阶",
+    "language": "英文",
+    "provider": "UC Berkeley",
+    "format": "课程讲义 / 作业",
+    "icon": "◈",
+    "description": "经典人工智能课程，涵盖搜索、约束满足、马尔可夫决策过程与机器学习基础。",
+    "topics": [
+      "搜索算法",
+      "概率推理",
+      "决策过程",
+      "机器学习"
+    ],
+    "recommendation": "先手动走一遍搜索或决策过程，再实现简化版本；做题时明确状态、动作和目标。",
+    "url": "https://inst.eecs.berkeley.edu/~cs188/"
+  },
+  {
+    "id": "fastai-practical-deep-learning",
+    "title": "Practical Deep Learning for Coders",
+    "category": "人工智能",
+    "level": "进阶",
+    "language": "英文",
+    "provider": "fast.ai",
+    "format": "视频 / Notebook / 项目",
+    "icon": "◈",
+    "description": "以动手实践为主，逐步训练并使用深度学习模型，适合已经具备基本 Python 能力的学习者。",
+    "topics": [
+      "深度学习",
+      "PyTorch",
+      "模型训练",
+      "计算机视觉",
+      "NLP"
+    ],
+    "recommendation": "跟着 Notebook 实际运行并修改实验；记录数据、模型、指标和错误，而不只复制结果。",
+    "url": "https://course.fast.ai/"
+  },
+  {
+    "id": "pytorch-tutorials",
+    "title": "PyTorch Tutorials",
+    "category": "人工智能",
+    "level": "基础",
+    "language": "英文",
+    "provider": "PyTorch 官方",
+    "format": "教程 / 代码示例",
+    "icon": "◈",
+    "description": "学习张量、自动微分、神经网络构建、训练循环和模型保存等深度学习工程基础。",
+    "topics": [
+      "PyTorch",
+      "张量",
+      "自动微分",
+      "神经网络",
+      "训练循环"
+    ],
+    "recommendation": "从基础教程开始，确保能解释每个张量的形状、梯度如何产生，以及参数何时更新。",
+    "url": "https://pytorch.org/tutorials/"
+  },
+  {
+    "id": "huggingface-llm-course",
+    "title": "Hugging Face LLM Course",
+    "category": "人工智能",
+    "level": "进阶",
+    "language": "英文",
+    "provider": "Hugging Face",
+    "format": "免费在线课程 / 代码",
+    "icon": "◈",
+    "description": "介绍 Transformers、预训练模型、数据集、微调与模型分享，适合进入现代自然语言处理和大语言模型实践。",
+    "topics": [
+      "Transformers",
+      "NLP",
+      "大语言模型",
+      "数据集",
+      "微调"
+    ],
+    "recommendation": "先完成 Python 与基础机器学习内容；每个章节都运行代码，并关注模型输入输出和资源消耗。",
+    "url": "https://huggingface.co/learn/llm-course/chapter1/1"
+  },
+  {
+    "id": "nand2tetris",
+    "title": "From Nand to Tetris",
+    "category": "计算机科学",
+    "level": "进阶",
+    "language": "英文",
+    "provider": "Nand2Tetris",
+    "format": "课程 / 项目 / 视频",
+    "icon": "⌘",
+    "description": "通过一系列项目，从逻辑门逐步构建计算机硬件、机器语言、虚拟机和编译器，理解抽象层如何衔接。",
+    "topics": [
+      "计算机组成",
+      "逻辑门",
+      "汇编",
+      "虚拟机",
+      "编译器"
+    ],
+    "recommendation": "按顺序完成项目，每一阶段都验证前一层如何支撑后一层；尽量先自己实现再看参考方案。",
+    "url": "https://www.nand2tetris.org/"
+  },
+  {
+    "id": "stanford-cs231n",
+    "title": "CS231n: Deep Learning for Computer Vision",
+    "category": "人工智能",
+    "level": "进阶",
+    "language": "英文",
+    "provider": "Stanford University",
+    "format": "讲义 / 视频 / 作业",
+    "icon": "◈",
+    "description": "从图像分类和神经网络出发，学习卷积网络、训练技巧与视觉模型，适合有线性代数和 Python 基础的学习者。",
+    "topics": [
+      "计算机视觉",
+      "卷积神经网络",
+      "反向传播",
+      "模型训练"
+    ],
+    "recommendation": "先复习梯度与矩阵运算；阅读讲义时把每个模块对应到输入形状、参数和损失函数。",
+    "url": "https://cs231n.stanford.edu/"
   }
 ]
