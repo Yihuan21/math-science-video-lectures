@@ -17,7 +17,8 @@
       <span><strong>Science Learning Studio</strong><small>个人科学学习平台</small></span>
     </a>
     <nav class="top-nav" aria-label="主导航">
-      <a class="nav-link active" href="#catalog">课程中心</a>
+      <a class="nav-link active" href="#dashboard">学习表盘</a>
+      <a class="nav-link" href="#catalog">课程中心</a>
       <a class="nav-link" href="#pathways">学习路径</a>
       <a class="nav-link" href="#study-workspace">任务与笔记</a>
       <a class="nav-link" href="#saved">我的收藏</a>
@@ -49,6 +50,33 @@
       <article class="stat-card"><span class="stat-label">完成进度</span><strong id="completed-count">0</strong><span class="stat-note">标记为已完成的课程</span></article>
     </section>
 
+    <section class="section-block dashboard-section" id="dashboard">
+      <div class="section-heading"><div><p class="eyebrow">YOUR LEARNING OS</p><h2>个人学习表盘</h2><p class="section-subtitle">把学习目标、实际投入和阶段进度放在一起，下一步做什么一目了然。</p></div></div>
+      <div class="dashboard-metrics">
+        <article class="dashboard-metric"><span>课程完成率</span><strong id="dash-course-rate">0%</strong><small id="dash-course-detail">0 / 0 门课程</small></article>
+        <article class="dashboard-metric"><span>任务完成率</span><strong id="dash-task-rate">0%</strong><small id="dash-task-detail">0 / 0 项任务</small></article>
+        <article class="dashboard-metric"><span>累计学习时间</span><strong id="dash-study-minutes">0 分钟</strong><small>按你记录的学习时长统计</small></article>
+        <article class="dashboard-metric"><span>连续学习</span><strong id="dash-streak">0 天</strong><small id="dash-last-study">记录一次学习，开始积累</small></article>
+      </div>
+      <div class="dashboard-columns">
+        <section class="dashboard-panel"><div class="study-panel-heading"><div><p class="eyebrow">NEXT STEP</p><h3>先修学习路径</h3></div><span class="study-count">按顺序推进</span></div><div id="dashboard-path-progress" class="dashboard-path-progress"></div></section>
+        <section class="dashboard-panel"><div class="study-panel-heading"><div><p class="eyebrow">STUDY LOG</p><h3>记录一次学习</h3></div><span class="study-count">本地保存</span></div>
+          <form id="study-log-form" class="study-log-form">
+            <label class="note-field"><span>今天学习了什么</span><input id="study-log-title" class="note-input" maxlength="120" placeholder="例如：理解矩阵的特征值" required></label>
+            <div class="study-log-fields"><label class="note-field"><span>学习时长（分钟）</span><input id="study-log-minutes" class="note-input" type="number" min="1" max="1440" value="30" required></label><label class="note-field"><span>关联课程</span><select id="study-log-course" class="select-control"><option value="">暂不关联课程</option></select></label></div>
+            <label class="note-field"><span>学习收获（选填）</span><textarea id="study-log-reflection" class="note-textarea" rows="3" maxlength="1500" placeholder="记下今天真正弄懂了什么、还有什么疑问。"></textarea></label>
+            <button class="primary-button" type="submit">保存学习记录</button>
+          </form>
+          <div class="study-panel-heading recent-heading"><h3>最近学习记录</h3><span id="study-log-count" class="study-count">0 条</span></div><div id="recent-study-logs" class="recent-study-logs"><p class="study-muted">还没有学习记录。</p></div>
+        </section>
+      </div>
+      <section class="dashboard-panel ai-assistant-panel">
+        <div class="study-panel-heading"><div><p class="eyebrow">AI STUDY ASSISTANT</p><h3>AI 学习助手</h3></div><label class="assistant-switch"><input id="ai-assistant-toggle" type="checkbox"><span>启用入口</span></label></div>
+        <p class="study-muted">计划支持课程概念解释、分步骤做题提示与个性化复习计划。当前为功能预留区，尚未连接模型 API。</p>
+        <div id="ai-assistant-content" class="ai-assistant-content"><span class="assistant-status">尚未接入 API</span><p>启用入口可查看接入要求；真正调用前需要配置安全的服务端代理、模型和权限策略。</p></div>
+      </section>
+    </section>
+
     <section class="section-block" id="catalog">
       <div class="section-heading">
         <div><p class="eyebrow">YOUR LIBRARY</p><h2>课程中心</h2><p class="section-subtitle">搜索课程名称、主题或学习阶段，找到适合当前水平的内容。</p></div>
@@ -74,13 +102,12 @@
 
     <section class="section-block pathways-section" id="pathways">
       <div class="section-heading"><div><p class="eyebrow">LEARNING ROADMAP</p><h2>推荐学习路径</h2><p class="section-subtitle">先打基础，再进入模型与应用。可按自己的节奏推进。</p></div></div>
-      <div class="pathway-grid">
-        <article class="pathway-card" data-pathway-category="编程基础"><span class="pathway-number">01</span><div class="pathway-icon">⌘</div><h3>编程与工具</h3><p>推荐顺序：Python 官方教程 → Missing Semester → 自动化小项目。目标是能独立读写脚本、调试并使用 Git。</p><div class="pathway-tags"><span>零基础可起步</span><span>4–6 周</span></div><a href="#catalog" data-path-filter="编程基础" class="text-link">查看编程课程 →</a></article>
-        <article class="pathway-card" data-pathway-category="数学基础"><span class="pathway-number">02</span><div class="pathway-icon">∫</div><h3>数学基础</h3><p>建议并行学习：线性代数 → 微积分 → 概率论。每章至少完成一道手算题，并用自己的话解释符号和结论。</p><div class="pathway-tags"><span>AI 先修</span><span>6–10 周起</span></div><a href="#catalog" data-path-filter="数学基础" class="text-link">查看数学课程 →</a></article>
-        <article class="pathway-card" data-pathway-category="人工智能"><span class="pathway-number">03</span><div class="pathway-icon">◈</div><h3>机器学习与 AI</h3><p>先理解监督学习与损失函数，再学 PyTorch 和深度学习，最后进入 Transformer、视觉模型或项目实践。</p><div class="pathway-tags"><span>需 Python 与数学</span><span>6–10 周起</span></div><a href="#catalog" data-path-filter="人工智能" class="text-link">查看 AI 课程 →</a></article>
-        <article class="pathway-card" data-pathway-category="计算机科学"><span class="pathway-number">04</span><div class="pathway-icon">▤</div><h3>计算机科学</h3><p>通过 CS50x 学算法与数据结构，再用 Nand2Tetris 理解硬件、指令、虚拟机和编译器的层次关系。</p><div class="pathway-tags"><span>建立系统观</span><span>持续实践</span></div><a href="#catalog" data-path-filter="计算机科学" class="text-link">查看计算机课程 →</a></article>
-      </div>
-    </section>
+      <div class="pathway-grid prerequisite-grid">
+        <article class="pathway-card" data-pathway-stage="python" data-pathway-category="编程基础"><span class="pathway-number">01</span><div class="pathway-icon">Py</div><h3>Python 编程基础</h3><p>先能独立读写函数、容器、文件和简单脚本。完成基础编程练习后，再进入数学与模型课程。</p><div class="pathway-tags"><span>第一阶段</span><span>必须先修</span></div><a href="#catalog" data-path-filter="编程基础" class="text-link">学习 Python →</a></article>
+        <article class="pathway-card" data-pathway-stage="math" data-pathway-category="数学基础"><span class="pathway-number">02</span><div class="pathway-icon">∫</div><h3>数学基础</h3><p>建立线性代数、微积分与概率统计基础。建议能解释矩阵、梯度、随机变量和期望，再系统学机器学习。</p><div class="pathway-tags"><span>先修：Python</span><span>第二阶段</span></div><a href="#catalog" data-path-filter="数学基础" class="text-link">学习数学 →</a></article>
+        <article class="pathway-card" data-pathway-stage="ml" data-pathway-category="人工智能"><span class="pathway-number">03</span><div class="pathway-icon">ML</div><h3>机器学习</h3><p>理解训练集与测试集、损失函数、梯度下降、过拟合和评价指标，并用小实验验证模型行为。</p><div class="pathway-tags"><span>先修：Python + 数学</span><span>第三阶段</span></div><a href="#catalog" data-path-filter="人工智能" class="text-link">学习机器学习 →</a></article>
+        <article class="pathway-card" data-pathway-stage="dl" data-pathway-category="人工智能"><span class="pathway-number">04</span><div class="pathway-icon">NN</div><h3>深度学习</h3><p>在机器学习基础上进入神经网络、反向传播、PyTorch、Transformer 与视觉模型；每个阶段都要完成代码实验。</p><div class="pathway-tags"><span>先修：机器学习</span><span>第四阶段</span></div><a href="#catalog" data-path-filter="人工智能" class="text-link">学习深度学习 →</a></article>
+      </div>    </section>
 
     <section class="section-block study-section" id="study-workspace">
       <div class="section-heading">
