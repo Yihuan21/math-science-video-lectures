@@ -81,6 +81,22 @@
     });
     $("#saved-toggle").setAttribute("aria-pressed", String(state.savedOnly));
     $("#saved-toggle").textContent = state.savedOnly ? "♥ 显示全部" : "♡ 只看收藏";
+    updatePathwayProgress();
+  }
+  function updatePathwayProgress() {
+    document.querySelectorAll("[data-pathway-category]").forEach(card => {
+      const category = card.dataset.pathwayCategory;
+      const courses = state.courses.filter(course => course.category === category);
+      const done = courses.filter(course => completed.has(course.id)).length;
+      let progress = card.querySelector(".pathway-progress");
+      if (!progress) {
+        progress = document.createElement("div");
+        progress.className = "pathway-progress";
+        const link = card.querySelector("[data-path-filter]");
+        if (link) card.insertBefore(progress, link);
+      }
+      progress.innerHTML = `<span>${done} / ${courses.length} 门课程已完成</span><span class="pathway-progress-track"><span style="width:${courses.length ? Math.round(done/courses.length*100) : 0}%"></span></span>`;
+    });
   }
   function showDetails(id) {
     const course = state.courses.find((item) => item.id === id);
@@ -149,7 +165,7 @@
     container.innerHTML = groups.map(stage => `<section class="task-group"><h4>${escapeHtml(stage)}</h4>${TASKS.filter(task => task.stage === stage).map(task => {
       const done = completedTasks.has(task.id);
       const course = state.courses.find(item => item.id === task.course);
-      return `<label class="task-item ${done ? "task-done" : ""}"><input type="checkbox" data-task-id="${escapeHtml(task.id)}" ${done ? "checked" : ""}><span class="task-copy"><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.detail)}</small><em>${escapeHtml(course ? course.title : "完成相关课程后实践")}</em></span></label>`;
+      return `<div class="task-item ${done ? "task-done" : ""}"><input type="checkbox" data-task-id="${escapeHtml(task.id)}" aria-label="完成任务：${escapeHtml(task.title)}" ${done ? "checked" : ""}><span class="task-copy"><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.detail)}</small><em>${escapeHtml(course ? course.title : "完成相关课程后实践")}</em></span>${course ? `<button type="button" class="task-course-link" data-task-course="${escapeHtml(course.id)}">打开课程</button>` : ""}</div>`;
     }).join("")}</section>`).join("");
     const doneCount = TASKS.filter(task => completedTasks.has(task.id)).length;
     const percent = Math.round(doneCount / TASKS.length * 100);
@@ -162,14 +178,24 @@
     if (!select) return;
     const previous = select.value;
     select.innerHTML = '<option value="">选择关联课程…</option>' + state.courses.map(course => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.title)}</option>`).join("");
+    const filter = $("#notes-course-filter");
+    const previousFilter = filter.value;
+    filter.innerHTML = '<option value="">全部课程</option>' + state.courses.map(course => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.title)}</option>`).join("");
+    if (state.courses.some(course => course.id === previousFilter)) filter.value = previousFilter;
     if (state.courses.some(course => course.id === previous)) select.value = previous;
     const list = $("#notes-list");
     $("#notes-count").textContent = `${notes.length} 条笔记`;
-    if (!notes.length) {
-      list.innerHTML = '<p class="study-muted">还没有笔记，写下第一条学习记录吧。</p>';
+    const search = ($("#notes-search")?.value || "").trim().toLocaleLowerCase();
+    const courseFilter = $("#notes-course-filter")?.value || "";
+    const filteredNotes = [...notes].filter(note => {
+      const haystack = `${note.title || ""} ${note.body}`.toLocaleLowerCase();
+      return (!search || haystack.includes(search)) && (!courseFilter || note.courseId === courseFilter);
+    });
+    if (!filteredNotes.length) {
+      list.innerHTML = notes.length ? '<p class="study-muted">没有符合条件的笔记。请调整搜索词或课程筛选。</p>' : '<p class="study-muted">还没有笔记，写下第一条学习记录吧。</p>';
       return;
     }
-    list.innerHTML = [...notes].sort((a,b) => b.updatedAt.localeCompare(a.updatedAt)).map(note => {
+    list.innerHTML = filteredNotes.sort((a,b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).map(note => {
       const course = state.courses.find(item => item.id === note.courseId);
       return `<article class="note-card"><div class="note-card-top"><div><strong>${escapeHtml(note.title || "未命名笔记")}</strong><small>${escapeHtml(course ? course.title : "课程已不存在")} · ${escapeHtml(new Date(note.updatedAt).toLocaleDateString())}</small></div><div class="note-card-actions"><button type="button" class="text-link" data-note-action="edit" data-note-id="${escapeHtml(note.id)}">编辑</button><button type="button" class="text-link note-delete" data-note-action="delete" data-note-id="${escapeHtml(note.id)}">删除</button></div></div><p>${escapeHtml(note.body).replace(/\n/g,"<br>")}</p></article>`;
     }).join("");
@@ -198,6 +224,13 @@
     }
     if (persistNotes()) { clearNoteForm(); renderNotes(); }
   }
+  $("#task-list").addEventListener("click", event => {
+    const button = event.target.closest("[data-task-course]");
+    if (!button) return;
+    showDetails(button.dataset.taskCourse);
+  });
+  $("#notes-search").addEventListener("input", renderNotes);
+  $("#notes-course-filter").addEventListener("change", renderNotes);
   $("#task-list").addEventListener("change", event => {
     const input = event.target.closest("[data-task-id]");
     if (!input) return;
