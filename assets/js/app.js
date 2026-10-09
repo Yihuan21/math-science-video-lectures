@@ -123,22 +123,24 @@
       card.classList.toggle("stage-locked", !prereqsMet);
     });
   }
+  function localDateKey(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
   function updateDashboard() {
-    const courseRate = state.courses.length ? Math.round(completed.size / state.courses.length * 100) : 0;
+    const completedCourseCount = state.courses.filter(course => completed.has(course.id)).length;
+    const courseRate = state.courses.length ? Math.round(completedCourseCount / state.courses.length * 100) : 0;
     const taskDone = TASKS.filter(task => completedTasks.has(task.id)).length;
     $("#dash-course-rate").textContent = courseRate + "%";
-    $("#dash-course-detail").textContent = `${Math.min(completed.size,state.courses.length)} / ${state.courses.length} 门课程`;
+    $("#dash-course-detail").textContent = `${completedCourseCount} / ${state.courses.length} 门课程`;
     $("#dash-task-rate").textContent = Math.round(taskDone / TASKS.length * 100) + "%";
     $("#dash-task-detail").textContent = `${taskDone} / ${TASKS.length} 项内置任务`;
     const minutes = studyLogs.reduce((sum, log) => sum + Math.max(0, Number(log.minutes) || 0), 0);
     $("#dash-study-minutes").textContent = minutes >= 60 ? `${Math.floor(minutes/60)}小时${minutes%60 ? " " + minutes%60 + "分" : ""}` : `${minutes} 分钟`;
-    const dates = [...new Set(studyLogs.map(log => new Date(log.createdAt).toLocaleDateString("en-CA")))].sort().reverse();
+    const dates = [...new Set(studyLogs.filter(log => log.createdAt && !Number.isNaN(new Date(log.createdAt).getTime())).map(log => localDateKey(new Date(log.createdAt))))].sort().reverse();
     let streak = 0;
     const dateSet = new Set(dates);
     const cursor = new Date();
-    const today = cursor.toLocaleDateString("en-CA");
+    const today = localDateKey(cursor);
     if (!dateSet.has(today)) cursor.setDate(cursor.getDate()-1);
-    while (dateSet.has(cursor.toLocaleDateString("en-CA"))) { streak++; cursor.setDate(cursor.getDate()-1); }
+    while (dateSet.has(localDateKey(cursor))) { streak++; cursor.setDate(cursor.getDate()-1); }
     $("#dash-streak").textContent = streak + " 天";
     $("#dash-last-study").textContent = dates.length ? "最近记录：" + dates[0] : "记录一次学习，开始积累";
     const path = $("#dashboard-path-progress");
@@ -426,7 +428,7 @@
         const validIds = new Set(state.courses.map((course) => course.id));
         const importedSaved = [...new Set(payload.saved.filter((id) => typeof id === "string" && validIds.has(id)))];
         const importedCompleted = [...new Set(payload.completed.filter((id) => typeof id === "string" && validIds.has(id)))];
-        if (!window.confirm("导入将替换本设备当前的收藏、课程完成状态、任务进度和笔记。建议先导出当前记录备份。是否继续？")) return;
+        if (!window.confirm("导入将替换本设备当前的收藏、课程完成状态、任务进度、课程目标、自定义任务、学习记录和笔记。建议先导出当前记录备份。是否继续？")) return;
         const importedTasks = payload.version >= 2
           ? [...new Set(payload.completedTasks.filter(id => typeof id === "string" && TASKS.some(task => task.id === id)))]
           : [];
