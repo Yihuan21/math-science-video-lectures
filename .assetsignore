@@ -1,0 +1,7 @@
+# Worker implementation and deployment configuration are server-side only
+worker/
+wrangler.toml
+.assetsignore
+.github/
+.git/
+node_modules/
