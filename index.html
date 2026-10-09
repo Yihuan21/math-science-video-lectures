@@ -71,9 +71,28 @@
         </section>
       </div>
       <section class="dashboard-panel ai-assistant-panel">
-        <div class="study-panel-heading"><div><p class="eyebrow">AI STUDY ASSISTANT</p><h3>AI 学习助手</h3></div><label class="assistant-switch"><input id="ai-assistant-toggle" type="checkbox"><span>启用入口</span></label></div>
-        <p class="study-muted">计划支持课程概念解释、分步骤做题提示与个性化复习计划。当前为功能预留区，尚未连接模型 API。</p>
-        <div id="ai-assistant-content" class="ai-assistant-content"><span class="assistant-status">尚未接入 API</span><p>启用入口可查看接入要求；真正调用前需要配置安全的服务端代理、模型和权限策略。</p></div>
+        <div class="study-panel-heading"><div><p class="eyebrow">AI STUDY ASSISTANT</p><h3>AI 学习助手</h3></div><label class="assistant-switch"><input id="ai-assistant-toggle" type="checkbox"><span>启用助手</span></label></div>
+        <p class="study-muted">回答遵循统一学习对话规范：先给明确结论、分步骤解释、优先引导思考，并在结尾给出一个具体下一步。API 密钥只保存在 Cloudflare Worker，不写入网页。</p>
+        <div id="ai-assistant-content" class="ai-assistant-content">
+          <span id="ai-connection-status" class="assistant-status">尚未连接</span>
+          <div class="ai-connection-settings" id="ai-connection-settings">
+            <h4>连接设置</h4>
+            <label class="note-field"><span>Cloudflare Worker API 地址</span><input id="ai-api-endpoint" class="note-input" type="url" inputmode="url" placeholder="https://你的-worker.workers.dev/api/chat" autocomplete="url"></label>
+            <label class="note-field"><span>访问令牌（Worker 的 AI_ACCESS_TOKEN）</span><input id="ai-access-token" class="note-input" type="password" autocomplete="off" placeholder="输入你设置的 Worker 访问令牌"></label>
+            <div class="ai-settings-actions"><button id="ai-save-settings" class="secondary-button" type="button">保存连接设置</button><button id="ai-test-connection" class="secondary-button" type="button">测试连接</button></div>
+            <p class="study-muted">访问令牌只保存在当前标签页会话；模型 API 密钥必须保存在 Worker Secret。请勿将 API 密钥填入此处。</p>
+          </div>
+          <div id="ai-chat-workspace" class="ai-chat-workspace" hidden>
+            <div class="ai-chat-controls">
+              <label class="note-field"><span>学习模式</span><select id="ai-chat-mode" class="select-control"><option value="explain">概念讲解</option><option value="hint">分步做题</option><option value="review">错题复盘</option><option value="plan">生成复习计划</option><option value="general">自由提问</option></select></label>
+              <label class="note-field"><span>关联课程（选填）</span><select id="ai-chat-course" class="select-control"><option value="">不附加课程背景</option></select></label>
+            </div>
+            <p class="ai-privacy-note">选择课程后，会将课程标题、简介、主题和你为该课程填写的学习目标发送给 API；不会自动发送全部笔记。</p>
+            <div id="ai-chat-messages" class="ai-chat-messages" role="log" aria-live="polite" aria-relevant="additions text"><p class="ai-chat-empty">你好！你可以让我解释一个概念、提示一道题的下一步，或根据学习目标安排复习。</p></div>
+            <form id="ai-chat-form" class="ai-chat-form"><label class="note-field"><span>你的问题</span><textarea id="ai-chat-input" class="note-textarea" rows="3" maxlength="4000" placeholder="例如：为什么梯度下降沿负梯度方向更新？请从几何直觉开始解释。" required></textarea></label><div class="ai-chat-actions"><span id="ai-chat-hint" class="study-muted">最多保留最近 12 条对话在本次页面会话中。</span><button id="ai-send-button" class="primary-button" type="submit">发送问题</button></div></form>
+            <button id="ai-clear-chat" class="secondary-button" type="button">清空本次对话</button>
+          </div>
+        </div>
       </section>
     </section>
 
