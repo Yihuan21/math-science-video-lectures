@@ -269,7 +269,7 @@
   const aiStatus = $("#ai-connection-status");
   const aiWorkspace = $("#ai-chat-workspace");
   const aiMessages = $("#ai-chat-messages");
-  function normalizeAiEndpoint(value) { return String(value || "").trim().replace(/\\/+$/, ""); }
+  function normalizeAiEndpoint(value) { return String(value || "").trim().replace(/\/+$/, ""); }
   function getAiEndpoint() { return normalizeAiEndpoint(endpointInput.value || localStorage.getItem(AI_ENDPOINT_KEY) || ""); }
   function getAiToken() { return String(tokenInput.value || sessionStorage.getItem(AI_TOKEN_SESSION_KEY) || "").trim(); }
   function setAiStatus(message, connected=false) {
@@ -324,7 +324,7 @@
   }
   async function testAiConnection() {
     if (!saveAiConnectionSettings()) return;
-    const endpoint=getAiEndpoint().replace(/\\/api\\/chat$/, "/api/health");
+    const endpoint=getAiEndpoint().replace(/\/api\/chat$/, "/api/health");
     setAiStatus("正在测试连接…");
     $("#ai-test-connection").disabled=true;
     try {
@@ -406,9 +406,7 @@
     } catch(error) {
       loading.remove();
       aiConversation=aiConversation.filter((message,index)=>!(message.role==="user"&&index===aiConversation.length-1));
-      addAiMessage("assistant","请求失败："+String(error.message||"连接失败")+"
-
-请检查 Worker 地址、访问令牌、允许的网页来源和服务端模型配置后重试。");
+      addAiMessage("assistant", "请求失败：" + String(error.message || "连接失败") + "\\n\\n请检查 Worker 地址、访问令牌、允许的网页来源和服务端模型配置后重试。");
       setAiStatus("请求失败 · 请检查配置");
       $("#ai-chat-hint").textContent="失败的问题未保存到对话历史，可以重新发送。";
     } finally {
