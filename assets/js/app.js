@@ -376,7 +376,16 @@
       topics:Array.isArray(course.topics)?course.topics.slice(0,12).map(x=>String(x).slice(0,100)):[],
       recommendation:String(course.recommendation||"").slice(0,800),
       goal:String(courseGoals[course.id]||"").slice(0,1000)
-    }:null;
+    }:{};
+    if($("#ai-chat-mode").value==="plan" && $("#ai-include-progress").checked) {
+      const recent=studyLogs.slice().sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||"")).slice(0,5);
+      context.learningProgress={
+        completedCourses:state.courses.filter(item=>completed.has(item.id)).slice(0,20).map(item=>item.title),
+        completedTasks:TASKS.filter(task=>completedTasks.has(task.id)).map(task=>task.title).slice(0,20).concat(Object.values(courseTasks).flat().filter(task=>task&&task.done).map(task=>task.title).slice(0,20)).slice(0,30),
+        recentLogs:recent.map(log=>({title:String(log.title||"").slice(0,120),minutes:Math.max(0,Number(log.minutes)||0),reflection:String(log.reflection||"").slice(0,300),date:String(log.createdAt||"").slice(0,30)})),
+        stageProgress:LEARNING_STAGES.map(stage=>{const stats=stageStats(stage);return {stage:stage.title,completed:stats.done,total:stats.courses.length};})
+      };
+    }
     aiConversation.push({role:"user",content:text});
     aiConversation=aiConversation.slice(-12);
     input.value="";
