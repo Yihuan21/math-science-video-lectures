@@ -270,7 +270,7 @@
   const aiWorkspace = $("#ai-chat-workspace");
   const aiMessages = $("#ai-chat-messages");
   function normalizeAiEndpoint(value) { return String(value || "").trim().replace(/\/+$/, ""); }
-  function getAiEndpoint() { return normalizeAiEndpoint(endpointInput.value || localStorage.getItem(AI_ENDPOINT_KEY) || ""); }
+  function getAiEndpoint() { return normalizeAiEndpoint(endpointInput.value || localStorage.getItem(AI_ENDPOINT_KEY) || (window.location.origin + "/api/chat")); }
   function getAiToken() { return String(tokenInput.value || sessionStorage.getItem(AI_TOKEN_SESSION_KEY) || "").trim(); }
   function setAiStatus(message, connected=false) {
     aiStatus.textContent = message;
@@ -337,7 +337,7 @@
       showToast("连接测试失败：请检查 Worker 地址、访问令牌和部署配置");
     } finally { $("#ai-test-connection").disabled=false; }
   }
-  $("#ai-api-endpoint").value=localStorage.getItem(AI_ENDPOINT_KEY)||"";
+  $("#ai-api-endpoint").value=localStorage.getItem(AI_ENDPOINT_KEY)||(window.location.origin + "/api/chat");
   $("#ai-access-token").value=sessionStorage.getItem(AI_TOKEN_SESSION_KEY)||"";
   $("#ai-assistant-toggle").addEventListener("change", event => {
     const enabled=event.target.checked;
