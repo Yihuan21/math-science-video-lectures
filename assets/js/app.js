@@ -125,6 +125,7 @@
   }
   function localDateKey(date) { return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; }
   function updateDashboard() {
+    populateAiCourseSelect();
     const completedCourseCount = state.courses.filter(course => completed.has(course.id)).length;
     const courseRate = state.courses.length ? Math.round(completedCourseCount / state.courses.length * 100) : 0;
     const builtInTaskDone = TASKS.filter(task => completedTasks.has(task.id)).length;
@@ -259,11 +260,163 @@
     studyLogs.push({id:"log-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7),title,minutes,courseId:$("#study-log-course").value,reflection:$("#study-log-reflection").value.trim(),createdAt:new Date().toISOString()});
     if(saveObject(STORAGE_KEYS.studyLogs,studyLogs)) { $("#study-log-title").value=""; $("#study-log-reflection").value=""; updateDashboard(); showToast("学习记录已保存"); }
   });
+  const AI_ENDPOINT_KEY = "sls_ai_endpoint_v1";
+  const AI_TOKEN_SESSION_KEY = "sls_ai_access_token_session";
+  let aiConversation = [];
+  let aiBusy = false;
+  const endpointInput = $("#ai-api-endpoint");
+  const tokenInput = $("#ai-access-token");
+  const aiStatus = $("#ai-connection-status");
+  const aiWorkspace = $("#ai-chat-workspace");
+  const aiMessages = $("#ai-chat-messages");
+  function normalizeAiEndpoint(value) { return String(value || "").trim().replace(/\\/+$/, ""); }
+  function getAiEndpoint() { return normalizeAiEndpoint(endpointInput.value || localStorage.getItem(AI_ENDPOINT_KEY) || ""); }
+  function getAiToken() { return String(tokenInput.value || sessionStorage.getItem(AI_TOKEN_SESSION_KEY) || "").trim(); }
+  function setAiStatus(message, connected=false) {
+    aiStatus.textContent = message;
+    aiStatus.classList.toggle("assistant-status-connected", connected);
+  }
+  function addAiMessage(role, content, meta="") {
+    const empty = aiMessages.querySelector(".ai-chat-empty");
+    if (empty) empty.remove();
+    const article = document.createElement("article");
+    article.className = "ai-message " + (role === "user" ? "ai-message-user" : role === "system" ? "ai-message-system" : "ai-message-assistant");
+    const label = document.createElement("strong");
+    label.className = "ai-message-label";
+    label.textContent = role === "user" ? "你" : role === "system" ? "连接状态" : "学习助手";
+    const body = document.createElement("p");
+    body.className = "ai-message-body";
+    body.textContent = content;
+    article.append(label, body);
+    if (meta) { const small=document.createElement("small"); small.textContent=meta; article.append(small); }
+    aiMessages.append(article);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    return article;
+  }
+  function renderAiConversation() {
+    aiMessages.replaceChildren();
+    if (!aiConversation.length) {
+      const empty=document.createElement("p"); empty.className="ai-chat-empty";
+      empty.textContent="你好！你可以让我解释一个概念、提示一道题的下一步，或根据学习目标安排复习。";
+      aiMessages.append(empty); return;
+    }
+    aiConversation.forEach(message=>addAiMessage(message.role,message.content));
+  }
+  function populateAiCourseSelect() {
+    const select=$("#ai-chat-course");
+    if (!select) return;
+    const previous=select.value;
+    select.innerHTML='<option value="">不附加课程背景</option>'+state.courses.map(course=>`<option value="${escapeHtml(course.id)}">${escapeHtml(course.title)}</option>`).join("");
+    if(state.courses.some(course=>course.id===previous)) select.value=previous;
+  }
+  function saveAiConnectionSettings() {
+    const endpoint=getAiEndpoint(), token=getAiToken();
+    if (!/^https:\/\//i.test(endpoint) || !endpoint.endsWith("/api/chat")) {
+      showToast("API 地址必须使用 HTTPS，并以 /api/chat 结尾"); endpointInput.focus(); return false;
+    }
+    if (!token || token.length < 20) { showToast("请填写 Worker 的访问令牌（至少 20 个字符）"); tokenInput.focus(); return false; }
+    localStorage.setItem(AI_ENDPOINT_KEY,endpoint);
+    sessionStorage.setItem(AI_TOKEN_SESSION_KEY,token);
+    endpointInput.value=endpoint; tokenInput.value=token;
+    setAiStatus("连接设置已保存 · 尚未测试");
+    showToast("AI 连接设置已保存");
+    return true;
+  }
+  async function testAiConnection() {
+    if (!saveAiConnectionSettings()) return;
+    const endpoint=getAiEndpoint().replace(/\\/api\\/chat$/, "/api/health");
+    setAiStatus("正在测试连接…");
+    $("#ai-test-connection").disabled=true;
+    try {
+      const response=await fetch(endpoint,{method:"GET",headers:{Authorization:"Bearer "+getAiToken(),Accept:"application/json"}});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+      setAiStatus("Worker 已连接 · API 配置正常",true);
+      showToast("连接测试成功");
+    } catch(error) {
+      setAiStatus("连接失败 · "+String(error.message||"请检查地址、令牌和 Worker 配置"));
+      showToast("连接测试失败：请检查 Worker 地址、访问令牌和部署配置");
+    } finally { $("#ai-test-connection").disabled=false; }
+  }
+  $("#ai-api-endpoint").value=localStorage.getItem(AI_ENDPOINT_KEY)||"";
+  $("#ai-access-token").value=sessionStorage.getItem(AI_TOKEN_SESSION_KEY)||"";
   $("#ai-assistant-toggle").addEventListener("change", event => {
-    const enabled=event.target.checked, panel=$("#ai-assistant-content");
-    panel.innerHTML=enabled
-      ? '<span class="assistant-status">入口已开启 · API 尚未连接</span><p>接入前需准备服务端代理地址、模型名称和访问策略。API 密钥应保存在 Cloudflare Worker Secret 中，不能写进前端文件或导出备份。</p><ul><li>概念解释：基于当前课程与学习笔记提问</li><li>做题辅助：分步骤提示，保留独立思考空间</li><li>复习计划：根据已完成内容与学习记录安排复习</li></ul><p class="study-muted">此开关目前只控制入口说明，不会发送网络请求或产生 AI 答案。</p>'
-      : '<span class="assistant-status">尚未接入 API</span><p>计划支持课程概念解释、分步骤做题提示与个性化复习计划。当前为功能预留区，尚未连接模型 API。</p>';
+    const enabled=event.target.checked;
+    aiWorkspace.hidden=!enabled;
+    if(enabled) {
+      populateAiCourseSelect();
+      setAiStatus(getAiEndpoint()&&getAiToken()?"已填写连接信息 · 请先测试":"请配置 Worker 地址和访问令牌");
+      if(!aiMessages.children.length) renderAiConversation();
+    }
+  });
+  $("#ai-save-settings").addEventListener("click",saveAiConnectionSettings);
+  $("#ai-test-connection").addEventListener("click",testAiConnection);
+  $("#ai-clear-chat").addEventListener("click",()=>{
+    if(aiBusy) return;
+    aiConversation=[];
+    renderAiConversation();
+    showToast("本次对话已清空");
+  });
+  $("#ai-chat-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(aiBusy) return;
+    const input=$("#ai-chat-input"), text=input.value.trim();
+    if(!text) return;
+    if(!getAiEndpoint()||!getAiToken()) {
+      setAiStatus("尚未配置连接");
+      showToast("请先填写 Worker 地址和访问令牌");
+      $("#ai-connection-settings").scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
+    if(!saveAiConnectionSettings()) return;
+    const course=state.courses.find(item=>item.id===$("#ai-chat-course").value);
+    const context=course?{
+      title:course.title,
+      description:String(course.description||"").slice(0,1200),
+      topics:Array.isArray(course.topics)?course.topics.slice(0,12).map(x=>String(x).slice(0,100)):[],
+      recommendation:String(course.recommendation||"").slice(0,800),
+      goal:String(courseGoals[course.id]||"").slice(0,1000)
+    }:null;
+    aiConversation.push({role:"user",content:text});
+    aiConversation=aiConversation.slice(-12);
+    input.value="";
+    renderAiConversation();
+    const loading=addAiMessage("assistant","正在思考…");
+    aiBusy=true;
+    $("#ai-send-button").disabled=true;
+    $("#ai-clear-chat").disabled=true;
+    $("#ai-chat-hint").textContent="正在请求学习助手…";
+    setAiStatus("正在请求 API…");
+    try {
+      const response=await fetch(getAiEndpoint(),{
+        method:"POST",
+        headers:{"Content-Type":"application/json",Authorization:"Bearer "+getAiToken(),Accept:"application/json"},
+        body:JSON.stringify({mode:$("#ai-chat-mode").value,messages:aiConversation.slice(-12),context})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(data.error||`HTTP ${response.status}`);
+      const reply=typeof data.reply==="string"?data.reply.trim():"";
+      if(!reply) throw new Error("API 没有返回可显示的回答");
+      loading.remove();
+      aiConversation.push({role:"assistant",content:reply});
+      aiConversation=aiConversation.slice(-12);
+      renderAiConversation();
+      setAiStatus("回答完成",true);
+      $("#ai-chat-hint").textContent="对话仅保存在当前页面会话中；刷新后会清空。";
+    } catch(error) {
+      loading.remove();
+      aiConversation=aiConversation.filter((message,index)=>!(message.role==="user"&&index===aiConversation.length-1));
+      addAiMessage("assistant","请求失败："+String(error.message||"连接失败")+"
+
+请检查 Worker 地址、访问令牌、允许的网页来源和服务端模型配置后重试。");
+      setAiStatus("请求失败 · 请检查配置");
+      $("#ai-chat-hint").textContent="失败的问题未保存到对话历史，可以重新发送。";
+    } finally {
+      aiBusy=false;
+      $("#ai-send-button").disabled=false;
+      $("#ai-clear-chat").disabled=false;
+      input.focus();
+    }
   });
   $("#search-input").addEventListener("input", (event) => { state.query = event.target.value.trim(); render(); });
   $("#level-filter").addEventListener("change", (event) => { state.level = event.target.value; render(); });
