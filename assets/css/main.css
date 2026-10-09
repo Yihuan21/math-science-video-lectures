@@ -101,3 +101,7 @@
 .assistant-status-connected{background:#e7f7ed;color:#237346}
 #ai-send-button:disabled,#ai-clear-chat:disabled,#ai-test-connection:disabled{opacity:.55;cursor:wait}
 @media(max-width:640px){.ai-chat-controls{grid-template-columns:1fr}.ai-chat-messages{max-height:380px;min-height:150px;padding:9px}.ai-message{max-width:100%}.ai-chat-actions{align-items:stretch;flex-direction:column}.ai-chat-actions .primary-button{width:100%}.ai-settings-actions>*{flex:1}}
+
+.ai-progress-consent{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;margin:8px 0 12px;border:1px solid #e7e6f4;border-radius:11px;background:#fff;font-size:10px;line-height:1.65;color:#555a70;cursor:pointer}
+.ai-progress-consent input{flex:0 0 auto;margin-top:2px;accent-color:var(--purple)}
+.ai-progress-consent span{flex:1}
