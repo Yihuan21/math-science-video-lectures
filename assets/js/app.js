@@ -237,7 +237,9 @@
       version: 2,
       exportedAt: new Date().toISOString(),
       saved: [...saved],
-      completed: [...completed]
+      completed: [...completed],
+      completedTasks: [...completedTasks],
+      notes: notes.map(note => ({ ...note }))
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -263,14 +265,28 @@
         const validIds = new Set(state.courses.map((course) => course.id));
         const importedSaved = [...new Set(payload.saved.filter((id) => typeof id === "string" && validIds.has(id)))];
         const importedCompleted = [...new Set(payload.completed.filter((id) => typeof id === "string" && validIds.has(id)))];
-        if (!window.confirm("导入将替换本设备当前的收藏与完成记录。建议先导出当前记录备份。是否继续？")) return;
+        if (!window.confirm("导入将替换本设备当前的收藏、课程完成状态、任务进度和笔记。建议先导出当前记录备份。是否继续？")) return;
+        const importedTasks = payload.version === 2
+          ? [...new Set(payload.completedTasks.filter(id => typeof id === "string" && TASKS.some(task => task.id === id)))]
+          : [];
+        const importedNotes = payload.version === 2
+          ? payload.notes.filter(note => note && typeof note.id === "string" && typeof note.courseId === "string" && validIds.has(note.courseId) && typeof note.body === "string")
+              .map(note => ({ id: note.id, courseId: note.courseId, title: String(note.title || "").slice(0, 100), body: String(note.body).slice(0, 12000), createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString(), updatedAt: typeof note.updatedAt === "string" ? note.updatedAt : new Date().toISOString() }))
+          : [];
         saved.clear();
         completed.clear();
+        completedTasks.clear();
         importedSaved.forEach((id) => saved.add(id));
         importedCompleted.forEach((id) => completed.add(id));
+        importedTasks.forEach((id) => completedTasks.add(id));
+        notes = importedNotes;
         persist(STORAGE_KEYS.saved, saved);
         persist(STORAGE_KEYS.completed, completed);
+        persist(STORAGE_KEYS.tasks, completedTasks);
+        if (!persistNotes()) return;
         render();
+        renderTasks();
+        renderNotes();
         showToast("学习记录已导入");
       } catch (error) {
         showToast(error instanceof SyntaxError ? "无法读取文件：请选取有效的 JSON 备份" : (error.message || "导入失败"));
@@ -300,6 +316,8 @@
       }
       state.courses = courses;
       render();
+      renderTasks();
+      renderNotes();
     } catch (error) {
       grid.innerHTML = '<div class="empty-state">课程资源暂时无法加载。请确认通过网站地址访问（不要直接用 file:// 打开），并检查 data/courses.json 是否存在。</div>';
       $("#results-note").textContent = "加载失败；原始 README.md 未被修改。";
