@@ -72,7 +72,7 @@
       <div class="dialog-actions"><a class="primary-button" href="${escapeHtml(course.url)}" target="_blank" rel="noopener noreferrer">打开原始课程 ↗</a><button class="secondary-button" type="button" data-action="save" data-id="${escapeHtml(course.id)}">${saved.has(course.id) ? "♥ 已收藏" : "♡ 收藏课程"}</button><button class="secondary-button" type="button" data-action="complete" data-id="${escapeHtml(course.id)}">${completed.has(course.id) ? "✓ 已完成" : "标记完成"}</button></div>
       <p class="results-note">课程链接指向原始提供方；课程内容、可用性及语言信息请以来源网站为准。</p>
     </div>`;
-    if (typeof dialog.showModal === "function") dialog.showModal();
+    if (typeof dialog.showModal === "function" && !dialog.open) dialog.showModal();
     else showToast("当前浏览器不支持课程弹窗，请更新 Safari。");
   }
   function toggleSet(set, key, id, positive, negative) {
