@@ -1,6 +1,6 @@
 # AI 学习助手 API 接入说明
 
-本目录中的 `worker/ai-proxy.js` 是独立的 Cloudflare Worker 代理。它使用 OpenAI-compatible Chat Completions 协议，可连接支持该协议的模型服务。前端只知道 Worker 地址和访问令牌，不接触模型 API 密钥。
+本仓库采用单 Worker 架构：`worker/index.js` 同时处理现有静态学习平台和 `/api/chat`、`/api/health` AI 接口。静态页面通过 Cloudflare Static Assets 原样提供；AI 请求在服务端转发到 OpenAI-compatible Chat Completions API。前端不接触模型 API 密钥。`worker/ai-proxy.js` 保留为独立代理逻辑参考，不作为本仓库整合部署入口。
 
 ## 参考开源项目
 
@@ -9,11 +9,13 @@
 - [AI/ML Adaptive Learning Platform](https://github.com/Sanjayt215/AI-ML-Adaptive-Learning-Platform)：先修路径、学习分析、计划与 AI tutor 的组合。借鉴阶段进度和按学习任务切换助手模式的设计。
 - [i-have-adhd](https://github.com/ayghri/i-have-adhd)：本仓库的 AI system prompt 摘要其输出契约：先给可执行结论、步骤编号、抑制跑题、错误定位具体、最后给一个下一步。该 skill 以 MIT 许可发布；这里采用简化后的中文教学版，不把原始 skill 误称为 API 或模型本身。
 
-## 1. 创建 Worker
+## 1. 将 AI API 并入现有 Worker
 
-1. 在 Cloudflare Dashboard 打开 **Workers & Pages**，创建一个新的 Worker，例如 `science-learning-ai`。
-2. 将本仓库 `worker/ai-proxy.js` 的完整内容粘贴为 Worker 代码并部署。
-3. 在 Worker 的 **Settings → Variables and Secrets** 中添加下列配置。
+本仓库新增 `wrangler.toml`，将现有站点名 `math-science-video-lectures` 作为部署目标，并把根目录作为静态资源目录。部署前请先在 Cloudflare 确认当前 Worker 的资源目录与绑定设置；若现有 Worker 使用不同的部署流程，不要直接覆盖，先备份当前配置。
+
+1. 在仓库根目录运行 `npx wrangler deploy`，部署入口为 `worker/index.js`；它将 API 路由交给 Worker 代码，其他路径回退到 `ASSETS.fetch(request)`。
+2. 在现有 Worker 的 **Settings → Variables and Secrets** 中添加下列配置。无需另建 Worker，也无需更改网站地址。
+3. 确认 Static Assets binding 名称为 `ASSETS`，并确保 API 路由 `/api/*` 先经过 Worker。仓库中的 Wrangler 配置已声明此规则。
 
 | 名称 | 类型 | 用途 |
 | --- | --- | --- |
@@ -36,10 +38,9 @@
 
 ## 3. 在网站中连接
 
-1. 部署 Worker 后，复制其 HTTPS 地址。
-2. 在网站的 **AI 学习助手 → 启用助手** 中填写完整 API 地址，例如 `https://你的-worker.workers.dev/api/chat`。
-3. 填写与 Worker Secret `AI_ACCESS_TOKEN` 完全一致的访问令牌，点击“保存连接设置”，再点“测试连接”。
-4. 选择学习模式，可选关联课程后提问。关联课程时，前端会发送课程标题、简介、主题、建议和该课程的学习目标；不会自动上传全部笔记。只有选择“生成复习计划”并主动勾选学习进度选项时，才会附加已完成课程、任务和最近 5 条学习记录。对话历史只保存在当前页面内存中，刷新页面后清空。
+1. 打开现有站点 `https://math-science-video-lectures.yihuanchen219.workers.dev/`，启用 **AI 学习助手**。前端默认使用同源的 `/api/chat`，不需要填写另一个 Worker 地址；如果将来使用其他代理，仍可手动覆盖地址。
+2. 填写与 Worker Secret `AI_ACCESS_TOKEN` 完全一致的访问令牌，点击“保存连接设置”，再点“测试连接”。
+3. 选择学习模式，可选关联课程后提问。关联课程时，前端会发送课程标题、简介、主题、建议和该课程的学习目标；不会自动上传全部笔记。只有选择“生成复习计划”并主动勾选学习进度选项时，才会附加已完成课程、任务和最近 5 条学习记录。对话历史只保存在当前页面内存中，刷新页面后清空。
 
 ## 4. 对话规范与数据边界
 
@@ -60,4 +61,4 @@ Worker 不记录对话内容，也不把模型密钥返回给前端。模型服�
 
 - 这是单用户轻量接入方案，不包含账号系统、云端对话历史、向量数据库/RAG、自动上传整份教材或可靠的全局限流。
 - 连接测试只检查 Worker 认证与配置，不保证模型供应商账单、额度或所有模型能力均正常；实际发问才会调用模型。
-- Worker 文件已提交到仓库，但需要在 Cloudflare 部署并设置 Secrets/Variables 后，前端才会真正得到 AI 回答。
+- 代码提交到仓库不等于线上已部署。只有在现有 Worker 采用兼容的 Static Assets 配置并部署整合入口、设置 Secrets/Variables 后，前端才会真正得到 AI 回答。部署前应先核对 Cloudflare 当前配置并保留可回滚版本。
