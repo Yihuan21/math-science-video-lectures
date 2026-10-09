@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const DATA_URL = "./data/courses.json";
-  const STORAGE_KEYS = { saved: "sls_saved_v1", completed: "sls_completed_v1", tasks: "sls_tasks_v1", notes: "sls_notes_v1" };
+  const STORAGE_KEYS = { saved: "sls_saved_v1", completed: "sls_completed_v1", tasks: "sls_tasks_v1", notes: "sls_notes_v1", goals: "sls_goals_v1", courseTasks: "sls_course_tasks_v1", studyLogs: "sls_study_logs_v1" };
   const state = { courses: [], category: "全部", level: "all", query: "", savedOnly: false };
   const $ = (selector) => document.querySelector(selector);
   const grid = $("#course-grid");
@@ -15,7 +15,26 @@
   const completedTasks = readSet(STORAGE_KEYS.tasks);
   const readNotes = () => { try { const value = JSON.parse(localStorage.getItem(STORAGE_KEYS.notes) || "[]"); return Array.isArray(value) ? value.filter(n => n && typeof n.id === "string" && typeof n.courseId === "string" && typeof n.body === "string") : []; } catch { return []; } };
   let notes = readNotes();
+  const readObject = key => { try { const value = JSON.parse(localStorage.getItem(key) || "{}"); return value && typeof value === "object" && !Array.isArray(value) ? value : {}; } catch { return {}; } };
+  const readArray = key => { try { const value = JSON.parse(localStorage.getItem(key) || "[]"); return Array.isArray(value) ? value : []; } catch { return []; } };
+  let courseGoals = readObject(STORAGE_KEYS.goals);
+  let courseTasks = readObject(STORAGE_KEYS.courseTasks);
+  let studyLogs = readArray(STORAGE_KEYS.studyLogs).filter(log => log && typeof log.id === "string" && typeof log.title === "string" && Number.isFinite(Number(log.minutes)));
   let editingNoteId = null;
+  const COURSE_STAGE = {
+    "python-tutorial":"python", "automate-boring-stuff":"python",
+    "mit-linear-algebra":"math", "3b1b-linear-algebra":"math", "mit-calculus":"math", "harvard-stat110":"math",
+    "stanford-cs229":"ml", "berkeley-cs188":"ml",
+    "mit-6s191":"dl", "pytorch-tutorials":"dl", "fastai-practical-deep-learning":"dl", "huggingface-llm-course":"dl", "stanford-cs231n":"dl"
+  };
+  const LEARNING_STAGES = [
+    { id:"python", title:"Python 编程基础", category:"编程基础", ids:["python-tutorial","automate-boring-stuff"], prerequisite:[], summary:"能够独立读写基础脚本、函数和文件。" },
+    { id:"math", title:"数学基础", category:"数学基础", ids:["mit-linear-algebra","3b1b-linear-algebra","mit-calculus","harvard-stat110"], prerequisite:["python"], summary:"理解矩阵、导数/梯度、概率与期望。" },
+    { id:"ml", title:"机器学习", category:"人工智能", ids:["stanford-cs229","berkeley-cs188"], prerequisite:["python","math"], summary:"理解训练/测试、损失函数、优化与泛化。" },
+    { id:"dl", title:"深度学习", category:"人工智能", ids:["pytorch-tutorials","mit-6s191","fastai-practical-deep-learning","huggingface-llm-course","stanford-cs231n"], prerequisite:["python","math","ml"], summary:"能解释神经网络训练流程并完成至少一个模型实验。" }
+  ];
+  const saveObject = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { showToast("保存失败：Safari 本地存储空间可能不足。"); return false; } };
+
   const TASKS = [
     { id:"python-setup", stage:"01 · 编程与工具", title:"运行并修改一个 Python 示例", detail:"运行官方教程中的一个示例，修改输入或逻辑，并用自己的话解释结果。", course:"python-tutorial" },
     { id:"tools-git", stage:"01 · 编程与工具", title:"完成一次命令行与 Git 练习", detail:"创建文件夹、查看文件、初始化或克隆仓库，并记录用到的命令。", course:"missing-semester" },
@@ -82,21 +101,73 @@
     $("#saved-toggle").setAttribute("aria-pressed", String(state.savedOnly));
     $("#saved-toggle").textContent = state.savedOnly ? "♥ 显示全部" : "♡ 只看收藏";
     updatePathwayProgress();
+    updateDashboard();
+  }
+  function stageStats(stage) {
+    const courses = state.courses.filter(course => COURSE_STAGE[course.id] === stage.id);
+    const done = courses.filter(course => completed.has(course.id)).length;
+    return { courses, done, percent: courses.length ? Math.round(done / courses.length * 100) : 0 };
   }
   function updatePathwayProgress() {
-    document.querySelectorAll("[data-pathway-category]").forEach(card => {
-      const category = card.dataset.pathwayCategory;
-      const courses = state.courses.filter(course => course.category === category);
-      const done = courses.filter(course => completed.has(course.id)).length;
+    document.querySelectorAll("[data-pathway-stage]").forEach(card => {
+      const stage = LEARNING_STAGES.find(item => item.id === card.dataset.pathwayStage);
+      if (!stage) return;
+      const stats = stageStats(stage);
+      const prereqsMet = stage.prerequisite.every(id => {
+        const prerequisite = LEARNING_STAGES.find(item => item.id === id);
+        return prerequisite && stageStats(prerequisite).courses.length > 0 && stageStats(prerequisite).done === stageStats(prerequisite).courses.length;
+      });
       let progress = card.querySelector(".pathway-progress");
-      if (!progress) {
-        progress = document.createElement("div");
-        progress.className = "pathway-progress";
-        const link = card.querySelector("[data-path-filter]");
-        if (link) card.insertBefore(progress, link);
-      }
-      progress.innerHTML = `<span>${done} / ${courses.length} 门课程已完成</span><span class="pathway-progress-track"><span style="width:${courses.length ? Math.round(done/courses.length*100) : 0}%"></span></span>`;
+      if (!progress) { progress = document.createElement("div"); progress.className = "pathway-progress"; const link = card.querySelector("[data-path-filter]"); if (link) card.insertBefore(progress, link); }
+      progress.innerHTML = `<span>${stats.done} / ${stats.courses.length} 门推荐课程已完成 · ${prereqsMet ? "先修条件已满足" : stage.prerequisite.length ? "先完成前置阶段" : "起点阶段"}</span><span class="pathway-progress-track"><span style="width:${stats.percent}%"></span></span>`;
+      card.classList.toggle("stage-locked", !prereqsMet);
     });
+  }
+  function updateDashboard() {
+    const courseRate = state.courses.length ? Math.round(completed.size / state.courses.length * 100) : 0;
+    const taskDone = TASKS.filter(task => completedTasks.has(task.id)).length;
+    $("#dash-course-rate").textContent = courseRate + "%";
+    $("#dash-course-detail").textContent = `${Math.min(completed.size,state.courses.length)} / ${state.courses.length} 门课程`;
+    $("#dash-task-rate").textContent = Math.round(taskDone / TASKS.length * 100) + "%";
+    $("#dash-task-detail").textContent = `${taskDone} / ${TASKS.length} 项内置任务`;
+    const minutes = studyLogs.reduce((sum, log) => sum + Math.max(0, Number(log.minutes) || 0), 0);
+    $("#dash-study-minutes").textContent = minutes >= 60 ? `${Math.floor(minutes/60)}小时${minutes%60 ? " " + minutes%60 + "分" : ""}` : `${minutes} 分钟`;
+    const dates = [...new Set(studyLogs.map(log => new Date(log.createdAt).toLocaleDateString("en-CA")))].sort().reverse();
+    let streak = 0;
+    const dateSet = new Set(dates);
+    const cursor = new Date();
+    const today = cursor.toLocaleDateString("en-CA");
+    if (!dateSet.has(today)) cursor.setDate(cursor.getDate()-1);
+    while (dateSet.has(cursor.toLocaleDateString("en-CA"))) { streak++; cursor.setDate(cursor.getDate()-1); }
+    $("#dash-streak").textContent = streak + " 天";
+    $("#dash-last-study").textContent = dates.length ? "最近记录：" + dates[0] : "记录一次学习，开始积累";
+    const path = $("#dashboard-path-progress");
+    if (path) path.innerHTML = LEARNING_STAGES.map(stage => {
+      const stats = stageStats(stage);
+      const prereqsMet = stage.prerequisite.every(id => { const p=LEARNING_STAGES.find(item=>item.id===id); return p && stageStats(p).courses.length>0 && stageStats(p).done===stageStats(p).courses.length; });
+      const next = stats.courses.find(course => !completed.has(course.id));
+      const status = stats.courses.length && stats.done===stats.courses.length ? "本阶段已完成" : prereqsMet ? "可以开始" : "等待先修";
+      return `<article class="dashboard-stage"><div class="dashboard-stage-top"><span class="stage-index">${String(LEARNING_STAGES.indexOf(stage)+1).padStart(2,"0")}</span><div><strong>${escapeHtml(stage.title)}</strong><small>${escapeHtml(status)} · ${stats.done}/${stats.courses.length} 门课程</small></div><span class="stage-percent">${stats.percent}%</span></div><div class="pathway-progress-track"><span style="width:${stats.percent}%"></span></div><p>${escapeHtml(stage.summary)}</p>${next ? `<button type="button" class="text-link dashboard-next-course" data-dashboard-course="${escapeHtml(next.id)}">${prereqsMet ? "下一步：" : "先修推荐："}${escapeHtml(next.title)} →</button>` : ""}</article>`;
+    }).join("");
+    const logCourse = $("#study-log-course");
+    if (logCourse) {
+      const previous = logCourse.value;
+      logCourse.innerHTML = '<option value="">暂不关联课程</option>' + state.courses.map(course=>`<option value="${escapeHtml(course.id)}">${escapeHtml(course.title)}</option>`).join("");
+      if (state.courses.some(course=>course.id===previous)) logCourse.value=previous;
+    }
+    const list=$("#recent-study-logs");
+    if(list) {
+      $("#study-log-count").textContent = studyLogs.length + " 条";
+      list.innerHTML = [...studyLogs].sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||"")).slice(0,5).map(log=>{
+        const course=state.courses.find(item=>item.id===log.courseId);
+        const when=log.createdAt ? new Date(log.createdAt).toLocaleString() : "时间未知";
+        return `<article class="recent-log"><div><strong>${escapeHtml(log.title)}</strong><small>${escapeHtml(when)} · ${Math.max(0,Number(log.minutes)||0)} 分钟${course ? " · "+escapeHtml(course.title) : ""}</small></div>${log.reflection ? `<p>${escapeHtml(log.reflection)}</p>` : ""}</article>`;
+      }).join("") || '<p class="study-muted">还没有学习记录。保存第一次学习后，这里会显示最近记录。</p>';
+    }
+  }
+  function renderCourseTasks(courseId) {
+    const tasks = Array.isArray(courseTasks[courseId]) ? courseTasks[courseId] : [];
+    return tasks.length ? tasks.map(task=>`<label class="course-custom-task ${task.done ? "task-done" : ""}"><input type="checkbox" data-course-task-toggle="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" ${task.done ? "checked" : ""}><span>${escapeHtml(task.title)}</span><button type="button" class="note-delete" data-course-task-delete="${escapeHtml(courseId)}" data-course-task-id="${escapeHtml(task.id)}" aria-label="删除任务">删除</button></label>`).join("") : '<p class="study-muted">还没有自定义任务。可以添加习题、章节复盘或小项目。</p>';
   }
   function showDetails(id) {
     const course = state.courses.find((item) => item.id === id);
@@ -107,6 +178,13 @@
       <span class="tag category">${escapeHtml(course.category)}</span><h2 id="dialog-title">${escapeHtml(course.title)}</h2>
       <p>${escapeHtml(course.description)}</p>
       <div class="dialog-info"><strong>学习信息</strong><br>难度：${escapeHtml(course.level)}<br>来源：${escapeHtml(course.provider)}<br>语言：${escapeHtml(course.language || "请查看来源页面")}<br>学习建议：${escapeHtml(course.recommendation || "先浏览课程大纲，再按章节学习并记录问题。")}<br>主题：${escapeHtml((course.topics || []).join("、") || "课程基础")}</div>
+      <section class="course-personal-plan">
+        <h3>我的学习目标</h3><p class="study-muted">为这门课写下可检查的目标；只保存在当前浏览器。</p>
+        <textarea id="course-goal-input" class="note-textarea" rows="3" maxlength="1500" placeholder="例如：完成线性代数前六讲，能手算矩阵乘法并解释特征值。">${escapeHtml(courseGoals[course.id] || "")}</textarea>
+        <button type="button" class="secondary-button" data-goal-save="${escapeHtml(course.id)}">保存学习目标</button>
+        <h3>我的实践任务</h3><form class="course-task-form" data-course-task-form="${escapeHtml(course.id)}"><input class="note-input" name="taskTitle" maxlength="160" placeholder="添加一个可执行的练习任务" required><button class="secondary-button" type="submit">添加任务</button></form>
+        <div class="course-custom-tasks">${renderCourseTasks(course.id)}</div>
+      </section>
       <div class="dialog-actions"><a class="primary-button" href="${escapeHtml(course.url)}" target="_blank" rel="noopener noreferrer">打开原始课程 ↗</a><button class="secondary-button" type="button" data-action="save" data-id="${escapeHtml(course.id)}">${saved.has(course.id) ? "♥ 已收藏" : "♡ 收藏课程"}</button><button class="secondary-button" type="button" data-action="complete" data-id="${escapeHtml(course.id)}">${completed.has(course.id) ? "✓ 已完成" : "标记完成"}</button></div>
       <p class="results-note">课程链接指向原始提供方；课程内容、可用性及语言信息请以来源网站为准。</p>
     </div>`;
@@ -129,11 +207,58 @@
     if (action === "details") showDetails(id);
   });
   $("#dialog-content").addEventListener("click", (event) => {
+    const personalButton = event.target.closest("[data-goal-save], [data-course-task-delete]");
+    if (personalButton && personalButton.hasAttribute("data-goal-save")) {
+      const id = personalButton.dataset.goalSave;
+      courseGoals[id] = $("#course-goal-input").value.trim();
+      if (saveObject(STORAGE_KEYS.goals, courseGoals)) showToast("课程学习目标已保存");
+      return;
+    }
+    if (personalButton && personalButton.hasAttribute("data-course-task-delete")) {
+      const id=personalButton.dataset.courseTaskDelete, taskId=personalButton.dataset.courseTaskId;
+      courseTasks[id]=(courseTasks[id]||[]).filter(task=>task.id!==taskId);
+      if(saveObject(STORAGE_KEYS.courseTasks,courseTasks)) showDetails(id);
+      return;
+    }
     const button = event.target.closest("[data-action]");
     if (!button) return;
     const { action, id } = button.dataset;
     if (action === "save") toggleSet(saved, STORAGE_KEYS.saved, id, "已加入收藏", "已取消收藏");
     if (action === "complete") toggleSet(completed, STORAGE_KEYS.completed, id, "已标记为完成", "已取消完成标记");
+  });
+  $("#dialog-content").addEventListener("change", event => {
+    const input=event.target.closest("[data-course-task-toggle]");
+    if(!input) return;
+    const courseId=input.dataset.courseTaskToggle, taskId=input.dataset.courseTaskId;
+    const task=(courseTasks[courseId]||[]).find(item=>item.id===taskId);
+    if(task) { task.done=input.checked; saveObject(STORAGE_KEYS.courseTasks,courseTasks); showDetails(courseId); }
+  });
+  $("#dialog-content").addEventListener("submit", event => {
+    const form=event.target.closest("[data-course-task-form]");
+    if(!form) return;
+    event.preventDefault();
+    const courseId=form.dataset.courseTaskForm, title=new FormData(form).get("taskTitle").toString().trim();
+    if(!title) return;
+    if(!Array.isArray(courseTasks[courseId])) courseTasks[courseId]=[];
+    courseTasks[courseId].push({id:"ct-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7),title,done:false});
+    if(saveObject(STORAGE_KEYS.courseTasks,courseTasks)) { showDetails(courseId); showToast("课程任务已添加"); }
+  });
+  $("#dashboard-path-progress").addEventListener("click", event => {
+    const button=event.target.closest("[data-dashboard-course]");
+    if(button) showDetails(button.dataset.dashboardCourse);
+  });
+  $("#study-log-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const title=$("#study-log-title").value.trim(), minutes=Number($("#study-log-minutes").value);
+    if(!title || !Number.isInteger(minutes) || minutes<1 || minutes>1440) { showToast("请填写学习内容和 1–1440 分钟的有效时长"); return; }
+    studyLogs.push({id:"log-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7),title,minutes,courseId:$("#study-log-course").value,reflection:$("#study-log-reflection").value.trim(),createdAt:new Date().toISOString()});
+    if(saveObject(STORAGE_KEYS.studyLogs,studyLogs)) { $("#study-log-title").value=""; $("#study-log-reflection").value=""; updateDashboard(); showToast("学习记录已保存"); }
+  });
+  $("#ai-assistant-toggle").addEventListener("change", event => {
+    const enabled=event.target.checked, panel=$("#ai-assistant-content");
+    panel.innerHTML=enabled
+      ? '<span class="assistant-status">入口已开启 · API 尚未连接</span><p>接入前需准备服务端代理地址、模型名称和访问策略。API 密钥应保存在 Cloudflare Worker Secret 中，不能写进前端文件或导出备份。</p><ul><li>概念解释：基于当前课程与学习笔记提问</li><li>做题辅助：分步骤提示，保留独立思考空间</li><li>复习计划：根据已完成内容与学习记录安排复习</li></ul><p class="study-muted">此开关目前只控制入口说明，不会发送网络请求或产生 AI 答案。</p>'
+      : '<span class="assistant-status">尚未接入 API</span><p>计划支持课程概念解释、分步骤做题提示与个性化复习计划。当前为功能预留区，尚未连接模型 API。</p>';
   });
   $("#search-input").addEventListener("input", (event) => { state.query = event.target.value.trim(); render(); });
   $("#level-filter").addEventListener("change", (event) => { state.level = event.target.value; render(); });
@@ -267,12 +392,15 @@
   function exportProgress() {
     const payload = {
       format: "science-learning-studio-progress",
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       saved: [...saved],
       completed: [...completed],
       completedTasks: [...completedTasks],
-      notes: notes.map(note => ({ ...note }))
+      notes: notes.map(note => ({ ...note })),
+      courseGoals: { ...courseGoals },
+      courseTasks: JSON.parse(JSON.stringify(courseTasks)),
+      studyLogs: studyLogs.map(log => ({ ...log }))
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -291,18 +419,18 @@
     reader.onload = () => {
       try {
         const payload = JSON.parse(String(reader.result || ""));
-        if (!payload || payload.format !== "science-learning-studio-progress" || ![1, 2].includes(payload.version) ||
-            !Array.isArray(payload.saved) || !Array.isArray(payload.completed) || (payload.version === 2 && (!Array.isArray(payload.completedTasks) || !Array.isArray(payload.notes)))) {
+        if (!payload || payload.format !== "science-learning-studio-progress" || ![1, 2, 3].includes(payload.version) ||
+            !Array.isArray(payload.saved) || !Array.isArray(payload.completed) || (payload.version >= 2 && (!Array.isArray(payload.completedTasks) || !Array.isArray(payload.notes))) || (payload.version >= 3 && (!payload.courseGoals || typeof payload.courseGoals !== "object" || !payload.courseTasks || typeof payload.courseTasks !== "object" || !Array.isArray(payload.studyLogs)) )) {
           throw new Error("备份文件格式不正确");
         }
         const validIds = new Set(state.courses.map((course) => course.id));
         const importedSaved = [...new Set(payload.saved.filter((id) => typeof id === "string" && validIds.has(id)))];
         const importedCompleted = [...new Set(payload.completed.filter((id) => typeof id === "string" && validIds.has(id)))];
         if (!window.confirm("导入将替换本设备当前的收藏、课程完成状态、任务进度和笔记。建议先导出当前记录备份。是否继续？")) return;
-        const importedTasks = payload.version === 2
+        const importedTasks = payload.version >= 2
           ? [...new Set(payload.completedTasks.filter(id => typeof id === "string" && TASKS.some(task => task.id === id)))]
           : [];
-        const importedNotes = payload.version === 2
+        const importedNotes = payload.version >= 2
           ? payload.notes.filter(note => note && typeof note.id === "string" && typeof note.courseId === "string" && validIds.has(note.courseId) && typeof note.body === "string")
               .map(note => ({ id: note.id, courseId: note.courseId, title: String(note.title || "").slice(0, 100), body: String(note.body).slice(0, 12000), createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString(), updatedAt: typeof note.updatedAt === "string" ? note.updatedAt : new Date().toISOString() }))
           : [];
@@ -313,10 +441,14 @@
         importedCompleted.forEach((id) => completed.add(id));
         importedTasks.forEach((id) => completedTasks.add(id));
         notes = importedNotes;
+        courseGoals = payload.version >= 3 && payload.courseGoals && typeof payload.courseGoals === "object" ? Object.fromEntries(Object.entries(payload.courseGoals).filter(([id,value])=>validIds.has(id)&&typeof value==="string").map(([id,value])=>[id,value.slice(0,1500)])) : {};
+        courseTasks = payload.version >= 3 && payload.courseTasks && typeof payload.courseTasks === "object" ? Object.fromEntries(Object.entries(payload.courseTasks).filter(([id,list])=>validIds.has(id)&&Array.isArray(list)).map(([id,list])=>[id,list.filter(task=>task&&typeof task.id==="string"&&typeof task.title==="string").map(task=>({id:task.id,title:task.title.slice(0,160),done:Boolean(task.done)})).slice(0,200)])) : {};
+        studyLogs = payload.version >= 3 && Array.isArray(payload.studyLogs) ? payload.studyLogs.filter(log=>log&&typeof log.id==="string"&&typeof log.title==="string"&&Number.isFinite(Number(log.minutes))).map(log=>({id:log.id,title:log.title.slice(0,120),minutes:Math.max(1,Math.min(1440,Math.round(Number(log.minutes)))),courseId:validIds.has(log.courseId)?log.courseId:"",reflection:String(log.reflection||"").slice(0,1500),createdAt:typeof log.createdAt==="string"?log.createdAt:new Date().toISOString()})).slice(-1000) : [];
         persist(STORAGE_KEYS.saved, saved);
         persist(STORAGE_KEYS.completed, completed);
         persist(STORAGE_KEYS.tasks, completedTasks);
         if (!persistNotes()) return;
+        saveObject(STORAGE_KEYS.goals, courseGoals); saveObject(STORAGE_KEYS.courseTasks, courseTasks); saveObject(STORAGE_KEYS.studyLogs, studyLogs);
         render();
         renderTasks();
         renderNotes();
