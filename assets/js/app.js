@@ -309,7 +309,7 @@
     select.innerHTML='<option value="">不附加课程背景</option>'+state.courses.map(course=>`<option value="${escapeHtml(course.id)}">${escapeHtml(course.title)}</option>`).join("");
     if(state.courses.some(course=>course.id===previous)) select.value=previous;
   }
-  function saveAiConnectionSettings() {
+  function saveAiConnectionSettings(silent=false) {
     const endpoint=getAiEndpoint(), token=getAiToken();
     if (!/^https:\/\//i.test(endpoint) || !endpoint.endsWith("/api/chat")) {
       showToast("API 地址必须使用 HTTPS，并以 /api/chat 结尾"); endpointInput.focus(); return false;
@@ -318,8 +318,7 @@
     localStorage.setItem(AI_ENDPOINT_KEY,endpoint);
     sessionStorage.setItem(AI_TOKEN_SESSION_KEY,token);
     endpointInput.value=endpoint; tokenInput.value=token;
-    setAiStatus("连接设置已保存 · 尚未测试");
-    showToast("AI 连接设置已保存");
+    if (!silent) { setAiStatus("连接设置已保存 · 尚未测试"); showToast("AI 连接设置已保存"); }
     return true;
   }
   async function testAiConnection() {
@@ -343,6 +342,7 @@
   $("#ai-assistant-toggle").addEventListener("change", event => {
     const enabled=event.target.checked;
     aiWorkspace.hidden=!enabled;
+    $("#ai-connection-settings").hidden=!enabled;
     if(enabled) {
       populateAiCourseSelect();
       setAiStatus(getAiEndpoint()&&getAiToken()?"已填写连接信息 · 请先测试":"请配置 Worker 地址和访问令牌");
@@ -368,7 +368,7 @@
       $("#ai-connection-settings").scrollIntoView({behavior:"smooth",block:"center"});
       return;
     }
-    if(!saveAiConnectionSettings()) return;
+    if(!saveAiConnectionSettings(true)) return;
     const course=state.courses.find(item=>item.id===$("#ai-chat-course").value);
     const context=course?{
       title:course.title,
