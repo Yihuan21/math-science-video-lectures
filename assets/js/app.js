@@ -115,6 +115,65 @@
       event.preventDefault(); $("#search-input").focus();
     }
   });
+  function exportProgress() {
+    const payload = {
+      format: "science-learning-studio-progress",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      saved: [...saved],
+      completed: [...completed]
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "science-learning-progress.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast("学习记录备份已导出");
+  }
+  function importProgressFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const payload = JSON.parse(String(reader.result || ""));
+        if (!payload || payload.format !== "science-learning-studio-progress" || payload.version !== 1 ||
+            !Array.isArray(payload.saved) || !Array.isArray(payload.completed)) {
+          throw new Error("备份文件格式不正确");
+        }
+        const validIds = new Set(state.courses.map((course) => course.id));
+        const importedSaved = [...new Set(payload.saved.filter((id) => typeof id === "string" && validIds.has(id)))];
+        const importedCompleted = [...new Set(payload.completed.filter((id) => typeof id === "string" && validIds.has(id)))];
+        if (!window.confirm("导入将替换本设备当前的收藏与完成记录。建议先导出当前记录备份。是否继续？")) return;
+        saved.clear();
+        completed.clear();
+        importedSaved.forEach((id) => saved.add(id));
+        importedCompleted.forEach((id) => completed.add(id));
+        persist(STORAGE_KEYS.saved, saved);
+        persist(STORAGE_KEYS.completed, completed);
+        render();
+        showToast("学习记录已导入");
+      } catch (error) {
+        showToast(error instanceof SyntaxError ? "无法读取文件：请选取有效的 JSON 备份" : (error.message || "导入失败"));
+      }
+    };
+    reader.onerror = () => showToast("读取文件失败，请重试");
+    reader.readAsText(file);
+  }
+  const exportButton = $("#export-progress");
+  const importButton = $("#import-progress");
+  const progressFile = $("#progress-file");
+  if (exportButton) exportButton.addEventListener("click", exportProgress);
+  if (importButton && progressFile) {
+    importButton.addEventListener("click", () => progressFile.click());
+    progressFile.addEventListener("change", () => {
+      importProgressFile(progressFile.files && progressFile.files[0]);
+      progressFile.value = "";
+    });
+  }
   async function init() {
     try {
       const response = await fetch(DATA_URL, { headers: { "Accept": "application/json" } });
